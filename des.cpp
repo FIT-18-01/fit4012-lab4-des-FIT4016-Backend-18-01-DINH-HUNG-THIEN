@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <bitset>
@@ -137,9 +138,6 @@ public:
             }
 
             roundKeys.push_back(roundKey);
-
-            // Optional: print key
-            cout << "Key " << i + 1 << ": " << roundKey << endl;
         }
     }
 
@@ -278,28 +276,122 @@ class DES {
         }
 };
     
-// Main function
-int main() {
-    // Example plaintext (64 bits)
-    string plaintext = "0001001000110100010101100111100010011010101111001101111011110001";
-    
-    // Example key (64 bits)
-    string key = "0001001100110100010101110111100110011011101111001101111111110001";
-    
-    // Generate round keys
+bool is_binary_string(const string& value) {
+    if (value.empty()) {
+        return false;
+    }
+    for (char ch : value) {
+        if (ch != '0' && ch != '1') {
+            return false;
+        }
+    }
+    return true;
+}
+
+vector<string> split_blocks(const string& text, size_t block_size) {
+    vector<string> blocks;
+    for (size_t pos = 0; pos < text.size(); pos += block_size) {
+        blocks.push_back(text.substr(pos, block_size));
+    }
+    return blocks;
+}
+
+string pad_block(const string& block, size_t block_size) {
+    string padded = block;
+    padded.resize(block_size, '0');
+    return padded;
+}
+
+string process_des_blocks(const string& text, const string& key, bool decrypt_mode) {
+    if (key.size() != 64 || !is_binary_string(key)) {
+        return "";
+    }
+
+    vector<string> blocks = split_blocks(text, 64);
+    if (blocks.empty()) {
+        return "";
+    }
+
+    if (blocks.back().size() < 64) {
+        blocks.back() = pad_block(blocks.back(), 64);
+    }
+
     KeyGenerator keygen(key);
-    keygen.generateRoundKeys(); 
-    
+    keygen.generateRoundKeys();
     vector<string> roundKeys = keygen.getRoundKeys();
-    
-    // Create DES object
+
+    if (decrypt_mode) {
+        reverse(roundKeys.begin(), roundKeys.end());
+    }
+
     DES des(roundKeys);
-    
-    // Encrypt
-    string ciphertext = des.encrypt(plaintext);
-    
-    cout << "Ciphertext: " << ciphertext << endl;
-    
+    string output = "";
+    for (const string& block : blocks) {
+        output += des.encrypt(block);
+    }
+    return output;
+}
+
+int main() {
+    int mode = 0;
+    if (!(cin >> mode)) {
+        return 1;
+    }
+
+    string input1;
+    string key1;
+    string key2;
+    string key3;
+
+    switch (mode) {
+        case 1:
+            cin >> input1 >> key1;
+            if (!is_binary_string(input1) || !is_binary_string(key1)) {
+                return 1;
+            }
+            cout << process_des_blocks(input1, key1, false);
+            break;
+        case 2:
+            cin >> input1 >> key1;
+            if (!is_binary_string(input1) || !is_binary_string(key1) || (input1.size() % 64) != 0) {
+                return 1;
+            }
+            cout << process_des_blocks(input1, key1, true);
+            break;
+        case 3:
+            cin >> input1 >> key1 >> key2 >> key3;
+            if (!is_binary_string(input1) || !is_binary_string(key1) || !is_binary_string(key2) || !is_binary_string(key3)) {
+                return 1;
+            }
+            if (input1.size() != 64 || key1.size() != 64 || key2.size() != 64 || key3.size() != 64) {
+                return 1;
+            }
+            {
+                string c1 = process_des_blocks(input1, key1, false);
+                string c2 = process_des_blocks(c1, key2, true);
+                string c3 = process_des_blocks(c2, key3, false);
+                cout << c3;
+            }
+            break;
+        case 4:
+            cin >> input1 >> key1 >> key2 >> key3;
+            if (!is_binary_string(input1) || !is_binary_string(key1) || !is_binary_string(key2) || !is_binary_string(key3)) {
+                return 1;
+            }
+            if (input1.size() != 64 || key1.size() != 64 || key2.size() != 64 || key3.size() != 64) {
+                return 1;
+            }
+            {
+                string p1 = process_des_blocks(input1, key3, true);
+                string p2 = process_des_blocks(p1, key2, false);
+                string p3 = process_des_blocks(p2, key1, true);
+                cout << p3;
+            }
+            break;
+        default:
+            return 1;
+    }
+
     return 0;
 }
 
