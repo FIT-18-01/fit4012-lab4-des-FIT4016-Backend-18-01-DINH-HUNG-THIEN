@@ -130,7 +130,7 @@ Thư mục `logs/` chứa `run-output.txt` để minh chứng chương trình ch
 - `tests/` ít nhất 5 test
 - negative test cho `tamper` và `wrong key`
 - `logs/` có file minh chứng
-- không còn placeholder `TODO_STUDENT`
+- không còn nội dung placeholder chưa hoàn chỉnh
 
 ## 10. CI
 
